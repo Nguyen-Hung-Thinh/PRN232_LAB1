@@ -55,3 +55,31 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+
+# Build output
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# Debug symbols
+*.pdb
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.rsuser
+
+# NuGet
+packages/
+*.nupkg
+project.assets.json
+
+# Logs
+*.log
+
+# Environment
+.env
+appsettings.Development.json
