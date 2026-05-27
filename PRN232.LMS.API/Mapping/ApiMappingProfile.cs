@@ -52,5 +52,8 @@ public class ApiMappingProfile : Profile
         CreateMap<EnrollmentBM, EnrollmentResponse>()
             .ForMember(d => d.Student, o => o.MapFrom(s => s.Student))
             .ForMember(d => d.Course,  o => o.MapFrom(s => s.Course));
+        CreateMap<EnrollmentBM, EnrollmentItemResponse>()
+            .ForMember(d => d.Student, o => o.MapFrom(s => s.Student))
+            .ForMember(d => d.Course,  o => o.MapFrom(s => s.Course));
     }
 }

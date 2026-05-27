@@ -12,7 +12,7 @@ namespace PRN232.LMS.API.Controllers;
 
 /// <summary>Manage Semesters</summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/semesters")]
 [Produces("application/json")]
 public class SemestersController : ControllerBase
 {
@@ -27,11 +27,16 @@ public class SemestersController : ControllerBase
 
     /// <summary>Get all semesters with search, sort and paging</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<object>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<SemesterResponse>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] SemesterQueryParams query)
     {
         var result = await _service.GetAllAsync(query);
-        return Ok(ApiResponse<PagedResult<object>>.Ok(result));
+        var pagedResponse = new PagedResult<SemesterResponse>
+        {
+            Items = result.Items.Select(i => _mapper.Map<SemesterResponse>(i)),
+            Pagination = result.Pagination
+        };
+        return Ok(ApiResponse<PagedResult<SemesterResponse>>.Ok(pagedResponse));
     }
 
     /// <summary>Get semester by ID</summary>
@@ -45,7 +50,21 @@ public class SemestersController : ControllerBase
         return Ok(ApiResponse<SemesterResponse>.Ok(_mapper.Map<SemesterResponse>(bm)));
     }
 
-    /// <summary>Create a new semester</summary>
+    /// <summary>Get all courses under a specific semester</summary>
+    [HttpGet("{id:int}/courses")]
+    [ProducesResponseType(typeof(ApiResponse<List<CourseResponse>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCoursesBySemesterId(int id)
+    {
+        var semester = await _service.GetByIdAsync(id);
+        if (semester == null) return NotFound(ApiResponse<object>.Fail("Semester not found"));
+
+        var courses = await _service.GetCoursesBySemesterIdAsync(id);
+        var result = courses.Select(c => _mapper.Map<CourseResponse>(_mapper.Map<CourseBM>(c))).ToList();
+        return Ok(ApiResponse<List<CourseResponse>>.Ok(result));
+    }
+
+    
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -53,7 +72,7 @@ public class SemestersController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ApiResponse<object>.Fail("Invalid request", ModelState));
-
+    
         var bm       = _mapper.Map<SemesterBM>(request);
         var created  = await _service.CreateAsync(bm);
         var response = _mapper.Map<SemesterResponse>(created);
@@ -69,7 +88,7 @@ public class SemestersController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ApiResponse<object>.Fail("Invalid request", ModelState));
-
+    
         var bm      = _mapper.Map<SemesterBM>(request);
         var updated = await _service.UpdateAsync(id, bm);
         if (updated == null) return NotFound(ApiResponse<object>.Fail("Semester not found"));

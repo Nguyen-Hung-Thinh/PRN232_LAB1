@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Services.BusinessModels;
@@ -26,9 +27,23 @@ public class SemesterService : ISemesterService
         return entity == null ? null : _mapper.Map<SemesterBM>(entity);
     }
 
+    public async Task<List<CourseBM>> GetCoursesBySemesterIdAsync(int semesterId)
+    {
+        var courses = await _repo.GetCoursesBySemesterIdAsync(semesterId);
+        return _mapper.Map<List<CourseBM>>(courses);
+    }
+
     public async Task<PagedResult<object>> GetAllAsync(SemesterQueryParams query)
     {
         var source = await _repo.GetQueryableAsync();
+
+        // Expand
+        if (!string.IsNullOrWhiteSpace(query.Expand))
+        {
+            var parts = query.Expand.Split(',');
+            if (parts.Contains("courses", StringComparer.OrdinalIgnoreCase))
+                source = source.Include(s => s.Courses);
+        }
 
         // Search
         if (!string.IsNullOrWhiteSpace(query.Search))
